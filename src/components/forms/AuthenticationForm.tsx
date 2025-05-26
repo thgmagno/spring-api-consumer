@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { Input } from '@/components/ui/input'
-import { Button } from '../ui/button'
+import { useActionState, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { actions } from '@/actions'
+import { InputCustom } from './fields/InputCustom'
+import { InputPassword } from './fields/InputPassword'
 
 export function AuthenticationForm() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -25,7 +27,7 @@ export function AuthenticationForm() {
 function HeaderForm() {
   return (
     <header className="mt-4 mb-8 flex flex-col items-center space-y-2.5">
-      <div className="h-12 w-12 rounded-lg bg-neutral-800" />
+      <div className="h-12 w-12 rounded-lg bg-gradient-to-tr from-amber-800 to-indigo-900" />
       <h1 className="mb-4 text-2xl font-light">Bem-vindo!</h1>
     </header>
   )
@@ -41,42 +43,96 @@ function Divider() {
   )
 }
 
-function FormWrapper({ children }: { children: React.ReactNode }) {
-  return <div className="flex w-full flex-col space-y-3">{children}</div>
-}
-
-function LoginForm({ toggleMode }: { toggleMode: () => void }) {
+function FormWrapper({
+  children,
+  action,
+}: {
+  children: React.ReactNode
+  action: (payload: FormData) => void
+}) {
   return (
-    <form className="flex w-[92%] max-w-sm flex-col items-center rounded-4xl bg-neutral-900 p-6 shadow-lg sm:p-8">
+    <form
+      action={action}
+      className="flex w-[92%] max-w-sm flex-col items-center rounded-4xl bg-neutral-900 p-6 shadow-lg sm:p-8"
+    >
       <HeaderForm />
-      <FormWrapper>
-        <Input type="email" name="email" placeholder="E-mail" />
-        <Input type="password" name="password" placeholder="Senha" />
-        <Button>Entrar</Button>
-        <Button variant="ghost">Esqueceu a senha?</Button>
-        <Divider />
-        <Button onClick={toggleMode} variant="link">
-          Crie uma conta
-        </Button>
-      </FormWrapper>
+      <div className="flex w-full flex-col space-y-3">{children}</div>
     </form>
   )
 }
 
-function RegisterForm({ toggleMode }: { toggleMode: () => void }) {
+function LoginForm({ toggleMode }: { toggleMode: () => void }) {
+  const [formState, action, isPending] = useActionState(actions.auth.login, {
+    errors: {},
+  })
+
   return (
-    <form className="flex w-full max-w-sm flex-col items-center rounded-4xl bg-neutral-900 p-8 shadow-lg">
-      <HeaderForm />
-      <FormWrapper>
-        <Input type="text" name="name" placeholder="Nome" />
-        <Input type="email" name="email" placeholder="E-mail" />
-        <Input type="password" name="password" placeholder="Senha" />
-        <Button>Criar conta</Button>
-        <Divider />
-        <Button onClick={toggleMode} variant="link">
-          Entre com e-mail e senha
-        </Button>
-      </FormWrapper>
-    </form>
+    <FormWrapper action={action}>
+      <InputCustom
+        name="email"
+        placeholder="E-mail"
+        isInvalid={!!formState.errors?.email}
+        errorMessage={formState.errors?.email}
+        prevState={formState.prevState?.email}
+      />
+      <InputPassword
+        isInvalid={!!formState.errors?.password}
+        errorMessage={formState.errors?.password}
+        prevState={formState.prevState?.password}
+      />
+      <Button type="submit" disabled={isPending}>
+        {isPending ? 'Aguarde...' : 'Entrar'}
+      </Button>
+      <Button type="button" variant="ghost">
+        Esqueceu a senha?
+      </Button>
+      <Divider />
+      <Button type="button" onClick={toggleMode} variant="link">
+        Crie uma conta
+      </Button>
+    </FormWrapper>
+  )
+}
+
+function RegisterForm({ toggleMode }: { toggleMode: () => void }) {
+  const [formState, action, isPending] = useActionState(actions.auth.register, {
+    errors: {},
+  })
+
+  return (
+    <FormWrapper action={action}>
+      <InputCustom
+        name="name"
+        placeholder="Nome"
+        isInvalid={!!formState.errors?.name}
+        errorMessage={formState.errors?.name}
+        prevState={formState.prevState?.name}
+      />
+      <InputCustom
+        name="email"
+        placeholder="E-mail"
+        isInvalid={!!formState.errors?.email}
+        errorMessage={formState.errors?.email}
+        prevState={formState.prevState?.email}
+      />
+      <InputPassword
+        isInvalid={!!formState.errors?.password}
+        errorMessage={formState.errors?.password}
+        prevState={formState.prevState?.password}
+      />
+      <InputPassword
+        confirm
+        isInvalid={!!formState.errors?.confirmPassword}
+        errorMessage={formState.errors?.confirmPassword}
+        prevState={formState.prevState?.confirmPassword}
+      />
+      <Button type="submit" disabled={isPending}>
+        {isPending ? 'Aguarde...' : 'Criar conta'}
+      </Button>
+      <Divider />
+      <Button type="button" onClick={toggleMode} variant="link">
+        Entre com e-mail e senha
+      </Button>
+    </FormWrapper>
   )
 }
